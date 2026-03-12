@@ -1,12 +1,10 @@
-# 24AI636 DL — Scaffolded Project
-## MINI-PROJECT 2: Pretrained CNN + Temporal Modeling using LSTM
-**Review 2 — 5th Mar 2026**
+
 
 ---
 
 ## Overview
 
-This project combines Pretrained CNN models with an LSTM-based temporal model to classify sequences of MNIST digit images. Each sample is a sequence of 4 frames of the same digit, and the model predicts which digit it is.
+This project uses pretrained CNN models combined with sequence models (RNN, LSTM, GRU) to classify MNIST digit images treated as temporal sequences. Each sample consists of 4 frames of the same digit grouped into one sequence. All three sequence models are trained and compared against each other.
 
 ---
 
@@ -14,9 +12,10 @@ This project combines Pretrained CNN models with an LSTM-based temporal model to
 
 ```
 mini_project2_cnn_temporal.py   ← Main code file
-sample_sequences.png            ← Sample MNIST sequences (generated)
-training_curves.png             ← Accuracy and loss curves (generated)
-confusion_matrix.png            ← Final test confusion matrix (generated)
+sample_sequences.png            ← Sample MNIST sequences (auto generated)
+training_curves.png             ← Val accuracy and loss for RNN vs LSTM vs GRU
+confusion_matrices.png          ← Confusion matrix for all 3 models
+model_accuracy_bar.png          ← Bar chart comparing test accuracy
 data/                           ← MNIST dataset (auto downloaded)
 ```
 
@@ -24,34 +23,38 @@ data/                           ← MNIST dataset (auto downloaded)
 
 ## Rubric Coverage (20 Marks)
 
-| Criterion | Marks | What Was Done |
-|---|---|---|
-| Temporal Data Preprocessing Pipeline | 2 | MNIST images grouped into sequences of 4 frames per digit |
-| Feature Extraction using Pretrained CNNs | 3 | ResNet-18 and MobileNet-V2 used as frozen feature extractors |
-| Fine-Tuning Pretrained CNN | 3 | ResNet-18 with layer4 unfrozen for transfer learning |
-| Embedding Usage | 2 | CNN features projected + positional embeddings added |
-| Attention-Based Model | 2 | Scaled dot-product attention over LSTM output frames |
-| LSTM Implementation | 4 | Full pipeline: Frames → CNN → Embedding → LSTM → Attention → Label |
-| Hyperparameter Experimentation | 1 | Grid search over learning rate and hidden size |
-| Model Comparison & Evaluation Metrics | 2 | Accuracy, Precision, Recall, F1, Confusion Matrix |
-| Code Organisation | 1 | Modular sections, fixed seed, plots saved |
+| # | Criterion | Marks | What Was Done |
+|---|---|---|---|
+| 1 | Temporal Data Preprocessing Pipeline | 2 | MNIST images grouped into sequences of 4 frames per digit |
+| 2 | Feature Extraction using Pretrained CNNs | 3 | ResNet-18 and MobileNet-V2 used as frozen feature extractors |
+| 3 | Fine-Tuning Pretrained CNN | 3 | ResNet-18 with layer4 unfrozen for transfer learning on MNIST |
+| 4 | Embedding Usage | 2 | CNN features projected to fixed size + positional embeddings added |
+| 5 | Attention-Based Model | 2 | Scaled dot-product attention over sequence output frames |
+| 6 | RNN / LSTM / GRU Implementation | 4 | All three implemented inside SequenceClassifier, trained separately |
+| 7 | Hyperparameter Experimentation | 1 | Grid search over learning rate × hidden size (4 combinations) |
+| 8 | Model Comparison & Evaluation Metrics | 2 | Accuracy, Precision, Recall, F1, Confusion Matrix for all 3 models |
+| 9 | Code Organisation | 1 | Modular sections per criterion, fixed seed, all results saved as plots |
 
 ---
 
 ## Model Pipeline
 
 ```
-Input Frames (4 MNIST images)
-        ↓
-CNN Feature Extractor (ResNet-18)
-        ↓
-Temporal Embedding (feature compression + position info)
-        ↓
-LSTM (captures dependencies across frames)
-        ↓
-Attention (focuses on important frames)
-        ↓
-Classifier → Digit Prediction (0–9)
+Input Frames (4 MNIST images of same digit)
+            ↓
+  CNN Feature Extractor
+  (ResNet-18 or MobileNet-V2 — frozen)
+            ↓
+  Temporal Embedding
+  (feature compression + positional info)
+            ↓
+  RNN / LSTM / GRU
+  (captures dependencies across frames)
+            ↓
+  Temporal Attention
+  (focuses on most important frames)
+            ↓
+  Classifier → Digit Prediction (0–9)
 ```
 
 ---
@@ -68,29 +71,30 @@ pip install torch torchvision scikit-learn matplotlib seaborn
 python mini_project2_cnn_temporal.py
 ```
 
-MNIST dataset will be downloaded automatically on first run.
+MNIST will be downloaded automatically on the first run into the `./data` folder.
 
 ---
 
-## Settings
+## Global Settings
 
 | Parameter | Value |
 |---|---|
-| Sequence Length | 4 frames |
+| Sequence Length | 4 frames per sample |
 | Batch Size | 32 |
 | Epochs | 5 |
 | Embed Dim | 256 |
 | Hidden Dim | 256 |
-| LSTM Layers | 2 |
+| LSTM / RNN / GRU Layers | 2 |
 | Dropout | 0.3 |
 | Learning Rate | 0.001 |
 | Number of Classes | 10 (digits 0–9) |
+| Random Seed | 42 |
 
 ---
 
 ## Hyperparameter Search
 
-Tested the following combinations and picked the best by validation accuracy:
+Tested the following 4 combinations and selected the best by validation accuracy:
 
 | Learning Rate | Hidden Dim |
 |---|---|
@@ -101,19 +105,28 @@ Tested the following combinations and picked the best by validation accuracy:
 
 ---
 
-## Outputs
+## Model Comparison
 
-- **sample_sequences.png** — Shows sample MNIST sequences used for training
-- **training_curves.png** — Train vs Val accuracy and loss per epoch
-- **confusion_matrix.png** — Predicted vs True labels on test set
+All three models share the same pipeline. Only the sequence model changes:
+
+| Model | Strengths |
+|---|---|
+| RNN | Simple, fast, struggles with long sequences |
+| LSTM | Has forget and input gates, handles long-term memory well |
+| GRU | Simpler than LSTM, similar performance, fewer parameters |
+
+Final comparison is done using Accuracy, Precision, Recall, F1 Score and Confusion Matrix.
 
 ---
 
-## Why LSTM?
+## Output Files
 
-- Handles **long-term dependencies** across frames better than plain RNN
-- Has **forget and input gates** giving better control over memory
-- Most widely used sequence model for temporal classification tasks
+| File | Description |
+|---|---|
+| `sample_sequences.png` | Shows 3 sample MNIST sequences used for training |
+| `training_curves.png` | Validation accuracy and loss per epoch for all 3 models |
+| `confusion_matrices.png` | Predicted vs True labels for RNN, LSTM, GRU side by side |
+| `model_accuracy_bar.png` | Bar chart of final test accuracy for all 3 models |
 
 ---
 
@@ -125,11 +138,11 @@ torchvision
 scikit-learn
 matplotlib
 seaborn
+numpy
 ```
 
 ---
 
-## Author
 
 **Course:** 24AI636 Deep Learning
 **Project:** Mini-Project 2
